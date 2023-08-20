@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Rental Payments</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2>Car Rental Payments</h2>
+        <hr />
+        <h3>Pay Rent Form</h1>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" class="form-control" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="paid">Paid (Rs):</label>
+                <input type="number" class="form-control" id="paid" value="500" required>
+            </div>
+            <div class="form-group">
+                <label for="note">Note:</label>
+                <input type="text" class="form-control" id="note" value="phonepe 636 189 4536">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Payment</button>
+        </form>
+
+        <hr/>
+        <h3>Car Rent Table</h2>
+
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Paid</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody id="paymentTableBody">
+            </tbody>
+        </table>
+       
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchPayments();
+
+            const paymentForm = document.getElementById('paymentForm');
+            paymentForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const date = document.getElementById('date').value;
+                const paid = document.getElementById('paid').value;
+                const note = document.getElementById('note').value;
+
+                addPayment(date, paid, note);
+            });
+
+            // Set the default value for the date input
+            const currentDate = getCurrentDate();
+            document.getElementById('date').value = currentDate;
+        });
+
+        function getCurrentDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            const day = today.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+
+        function fetchPayments() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/payments', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    displayPayments(data);
+                }
+            };
+            xhr.send();
+        }
+
+        function displayPayments(data) {
+            const paymentTableBody = document.getElementById('paymentTableBody');
+            paymentTableBody.innerHTML = '';
+
+            data.forEach(payment => {
+                const row = `
+            <tr>
+                <td>${payment.date}</td>
+                <td>${payment.paid} Rs</td>
+                <td>${payment.note}</td>
+            </tr>
+        `;
+                paymentTableBody.innerHTML += row;
+            });
+        }
+
+        function addPayment(date, paid, note) {
+            const payment = { date, paid, note };
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/add-payment', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 201) {
+                    fetchPayments();
+                    document.getElementById('date').value = '';
+                    document.getElementById('paid').value = '';
+                    document.getElementById('note').value = '';
+                }
+            };
+            xhr.send(JSON.stringify(payment));
+        }
+
+    </script>
+</body>
+
+</html>

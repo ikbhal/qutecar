@@ -1,0 +1,23 @@
+v1
+
+one car 
+one driver 
+one owner 
+no register
+no login 
+money receiving account  fixed
+
+---
+mark money transferred for given date 
+add note for each date 
+---
+365 days for now 
+---
+show only 12 months one month at a time 
+---
+show one week at a time 
+---
+node.js express cors(all), store in json file,
+
+---
+note: can we use 365d website  as template here 
