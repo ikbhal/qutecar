@@ -1,16 +1,13 @@
 [
   {
-    "date": "2023-08-18",
+    "rentDate": "2023-08-18",
+    "paymentDate": "2023-08-20",
     "paid": "500",
     "note": "phonepe 636 189 4536"
   },
   {
-    "date": "2023-08-19",
-    "paid": "500",
-    "note": "phonepe 636 189 4536"
-  },
-  {
-    "date": "2023-08-20",
+    "rentDate": "2023-08-19",
+    "paymentDate": "2023-08-20",
     "paid": "500",
     "note": "phonepe 636 189 4536"
   }

@@ -1,0 +1,10 @@
+v2 
+show rent date, paid date 
+
+v2.2.0
+admin page 
+delete payment 
+edit payment 
+
+v2.3.0
+sort payment by rent date  (desc)

@@ -27,6 +27,30 @@ app.post('/add-payment', (req, res) => {
     res.status(201).json({ message: 'Payment added successfully.' });
 });
 
+// implement delete by rent date 
+app.delete('/delete-payment/:rentDate', (req, res) => {
+    const rentDate = req.params.rentDate;
+    payments = payments.filter((payment) => payment.rentDate !== rentDate);
+    savePaymentsToFile();
+    res.status(200).json({ message: 'Payment deleted successfully.' });
+});
+
+app.put('/edit-payment/:rentDate', (req, res) => {
+    const rentDate = req.params.rentDate;
+    const { paymentDate, paid, note } = req.body; // Updated parameter name
+    // Find and update the payment with the matching rentDate
+    payments.forEach(payment => {
+        if (payment.rentDate === rentDate) {
+            payment.paymentDate = paymentDate; // Updated property name
+            payment.paid = paid;
+            payment.note = note;
+        }
+    });
+    savePaymentsToFile();
+    res.status(200).json({ message: 'Payment edited successfully.' });
+});
+
+
 function savePaymentsToFile() {
     fs.writeFileSync(dataFilePath, JSON.stringify(payments, null, 2));
 }

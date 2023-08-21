@@ -12,39 +12,50 @@
     <div class="container mt-5">
         <h2>Car Rental Payments</h2>
         <hr />
-        <h3>Pay Rent Form</h1>
+        <h3 id="formTitle">Pay Rent Form</h1>
 
-        <form id="paymentForm">
-            <div class="form-group">
+            <form id="paymentForm">
+                <!-- <div class="form-group">
                 <label for="date">Date:</label>
                 <input type="date" class="form-control" id="date" required>
-            </div>
-            <div class="form-group">
-                <label for="paid">Paid (Rs):</label>
-                <input type="number" class="form-control" id="paid" value="500" required>
-            </div>
-            <div class="form-group">
-                <label for="note">Note:</label>
-                <input type="text" class="form-control" id="note" value="phonepe 636 189 4536">
-            </div>
-            <button type="submit" class="btn btn-primary">Add Payment</button>
-        </form>
+            </div> -->
+                <div class="form-group">
+                    <label for="paymentDate">Payment Date:</label>
+                    <input type="date" class="form-control" id="paymentDate" name="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="rentDate">Rent Date:</label>
+                    <input type="date" class="form-control" id="rentDate" name="rentDate" required>
+                </div>
 
-        <hr/>
-        <h3>Car Rent Table</h2>
+                <div class="form-group">
+                    <label for="paid">Paid (Rs):</label>
+                    <input type="number" class="form-control" id="paid" value="500" required>
+                </div>
+                <div class="form-group">
+                    <label for="note">Note:</label>
+                    <input type="text" class="form-control" id="note" value="phonepe 636 189 4536">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Payment</button>
+            </form>
 
-        <table class="table mt-4">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Paid</th>
-                    <th>Note</th>
-                </tr>
-            </thead>
-            <tbody id="paymentTableBody">
-            </tbody>
-        </table>
-       
+            <hr />
+            <h3>Car Rent Table</h2>
+
+                <table class="table mt-4">
+                    <thead>
+                        <tr>
+                            <th>Rent Date</th>
+                            <th>Paid Date</th>
+                            <th>Paid</th>
+                            <th>Note</th>
+                            <th colspan="2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentTableBody">
+                    </tbody>
+                </table>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -52,21 +63,27 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            fetchPayments();
+            const isAdmin = window.location.hash === '#admin';
+            fetchPayments(isAdmin);
 
             const paymentForm = document.getElementById('paymentForm');
             paymentForm.addEventListener('submit', function (event) {
                 event.preventDefault();
-                const date = document.getElementById('date').value;
+                // const date = document.getElementById('date').value;
                 const paid = document.getElementById('paid').value;
                 const note = document.getElementById('note').value;
 
-                addPayment(date, paid, note);
+                const paymentDate = document.getElementById('paymentDate').value;
+                const rentDate = document.getElementById('rentDate').value;
+                addPayment(paymentDate, rentDate, paid, note);
+
+                // addPayment(date, paid, note);
             });
 
             // Set the default value for the date input
             const currentDate = getCurrentDate();
-            document.getElementById('date').value = currentDate;
+            document.getElementById('paymentDate').value = currentDate;
+            document.getElementById('rentDate').value = currentDate;
         });
 
         function getCurrentDate() {
@@ -78,49 +95,151 @@
         }
 
 
-        function fetchPayments() {
+        function fetchPayments(isAdmin) {
             const xhr = new XMLHttpRequest();
             xhr.open('GET', '/payments', true);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     const data = JSON.parse(xhr.responseText);
-                    displayPayments(data);
+                    // sort data  by rentDate
+                    const sortData = data.sort((a, b) => {
+                        if (a.rentDate < b.rentDate) {
+                            return 1;
+                        } else if (a.rentDate > b.rentDate) {
+                            return -1;
+                        } else {
+                            return 0;
+                        }
+                    });
+                    displayPayments(sortData, isAdmin);
                 }
             };
             xhr.send();
         }
 
-        function displayPayments(data) {
+        function displayPayments(data, isAdmin) {
             const paymentTableBody = document.getElementById('paymentTableBody');
             paymentTableBody.innerHTML = '';
+
+
 
             data.forEach(payment => {
                 const row = `
             <tr>
-                <td>${payment.date}</td>
+                <td>${payment.rentDate}</td>
+                <td>${payment.paymentDate}</td>
                 <td>${payment.paid} Rs</td>
                 <td>${payment.note}</td>
+                ${isAdmin ? '<td><button class="edit-btn">Edit</button></td><td><button class="delete-btn">Delete</button></td>' : ''}
             </tr>
         `;
                 paymentTableBody.innerHTML += row;
             });
+
+            if (isAdmin) {
+                // delete handler
+                const deleteButtons = document.querySelectorAll('.delete-btn');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const rentDate = button.parentElement.parentElement.children[0].innerText;
+                        deletePayment(rentDate);
+                    });
+                });
+
+                // edit handler
+
+                const editButtons = document.querySelectorAll('.edit-btn');
+                editButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const row = button.parentElement.parentElement;
+                        const rentDate = row.children[0].textContent;
+                        const paymentDate = row.children[1].textContent;
+                        const paid = row.children[2].textContent.split(' ')[0];
+                        const note = row.children[3].textContent;
+                        populateEditForm(rentDate, paymentDate, paid, note);
+                    });
+                });
+            }
         }
 
-        function addPayment(date, paid, note) {
-            const payment = { date, paid, note };
+        function populateEditForm(rentDate, paymentDate, paid, note) {
+            document.getElementById('formTitle').textContent = 'Edit Form';
+            document.getElementById('retDate').value = rentDate;
+            document.getElementById('paymentDate').value = paymentDate;
+            document.getElementById('paid').value = paid;
+            document.getElementById('note').value = note;
+            const form = document.getElementById('paymentForm');
+            form.removeEventListener('submit', addPaymentHandler);
+            form.addEventListener('submit', event => editPaymentHandler(event));
+        }
+
+        function editPaymentHandler(event) {
+            event.preventDefault();
+            const rentDate = document.getElementById('rentDate').value;
+            const paymentDate = document.getElementById('paymentDate').value;
+            const paid = document.getElementById('paid').value;
+            const note = document.getElementById('note').value;
+            editPayment(rentDate, paymentDate, paid, note);
+        }
+
+        function addPayment(rentDate, paymentDate, paid, note) {
+            const payment = { rentDate, paymentDate, paid, note };
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/add-payment', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status === 201) {
                     fetchPayments();
-                    document.getElementById('date').value = '';
+                    document.getElementById('rentDate').value = '';
+                    document.getElementById('paymentDate').value = '';
                     document.getElementById('paid').value = '';
                     document.getElementById('note').value = '';
                 }
             };
             xhr.send(JSON.stringify(payment));
         }
+
+        function deletePayment(rentDate) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('DELETE', `/delete-payment/${rentDate}`, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        alert('Payment deleted successfully.');
+                        const isAdmin = window.location.hash === '#admin';
+                        fetchPayments(isAdmin); // Update the table
+                    } else {
+                        alert('An error occurred while deleting the payment.');
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+
+        function editPayment(rentDate, paymentDate, paid, note) {
+            const payment = { paymentDate, paid, note };
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', `/edit-payment/${rentDate}`, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        alert('Payment edited successfully.');
+                        fetchPayments();
+                        resetForm();
+                    } else {
+                        alert('Error editing payment. Please try again.');
+                    }
+                }
+            };
+            xhr.onerror = function () {
+                alert('An error occurred while making the request.');
+            };
+            xhr.send(JSON.stringify(payment));
+        }
+
+
 
     </script>
 </body>
